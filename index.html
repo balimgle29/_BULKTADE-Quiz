@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BulkTrade Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d0d0d;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      flex-direction: column;
+    }
+    .quiz-container {
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 0 15px rgba(255,255,255,0.1);
+    }
+    h2 {
+      font-size: 1.2rem;
+    }
+    .answers button {
+      background: #262626;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: background 0.3s;
+    }
+    .answers button:hover {
+      background: #333;
+    }
+    .answers button.correct {
+      background: #2ecc71;
+    }
+    .answers button.wrong {
+      background: #e74c3c;
+    }
+    #next-btn {
+      background: #0077ff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    #next-btn:hover {
+      background: #005ce6;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h2 id="question">Loading question...</h2>
+    <div class="answers" id="answer-buttons"></div>
+    <button id="next-btn">Next</button>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "What is the primary goal of BULK Exchange?",
+        answers: [
+          { text: "Deliver colocation-grade performance in decentralized trading", correct: true },
+          { text: "Act as a centralized exchange under DeFi branding", correct: false },
+          { text: "Compromise decentralization for speed", correct: false },
+          { text: "Enable permissioned access only", correct: false },
+        ],
+      },
+      {
+        question: "Which of the following components is NOT part of BULK’s architecture?",
+        answers: [
+          { text: "BULK-Net", correct: false },
+          { text: "BULK-Tile", correct: false },
+          { text: "BULK-Sequencer", correct: true },
+          { text: "Commit Path", correct: false },
+        ],
+      },
+      {
+        question: "In Bulk’s order propagation (BULK Net), data is encoded using:",
+        answers: [
+          { text: "Reed-Solomon erasure coding", correct: true },
+          { text: "Hamming codes", correct: false },
+          { text: "Simple replication", correct: false },
+          { text: "XOR parity blocks", correct: false },
+        ],
+      },
+      {
+        question: "All TP/SL orders on Bulk are triggered by which price metric?",
+        answers: [
+          { text: "Last traded price", correct: false },
+          { text: "Mark Price", correct: true },
+          { text: "Derived oracle price only", correct: false },
+          { text: "Highest bid price", correct: false },
+        ],
+      },
+      {
+        question: "Which functionalities are supported by Bulk’s order types?",
+        answers: [
+          { text: "Market Order", correct: true },
+          { text: "Limit Order", correct: true },
+          { text: "Reduce-Only modifier", correct: true },
+          { text: "Iceberg Order", correct: false },
+        ],
+      },
+      {
+        question: "What happens when a self-trade is detected?",
+        answers: [
+          { text: "Trade executes and fees are charged", correct: false },
+          { text: "Resting maker order is canceled, no trade", correct: true },
+          { text: "Aggressing order is rejected", correct: false },
+          { text: "Both orders canceled, fee refunded", correct: false },
+        ],
+      },
+      {
+        question: "Which margin modes does Bulk support?",
+        answers: [
+          { text: "Cross margin", correct: true },
+          { text: "Isolated margin", correct: true },
+          { text: "Fixed margin only", correct: false },
+          { text: "Pooled margin", correct: false },
+        ],
+      },
+      {
+        question: "Funding payments on Bulk are exchanged:",
+        answers: [
+          { text: "Every minute", correct: false },
+          { text: "Every hour, without exchange fees", correct: true },
+          { text: "Only when position closes", correct: false },
+          { text: "Only paid to exchange operator", correct: false },
+        ],
+      },
+      {
+        question: "Entry price on Bulk is recalculated when:",
+        answers: [
+          { text: "User adds to position", correct: true },
+          { text: "User flips from long to short", correct: true },
+          { text: "User moves collateral", correct: false },
+          { text: "System resets daily", correct: false },
+        ],
+      },
+      {
+        question: "What defines 'economic finality' in Bulk’s design?",
+        answers: [
+          { text: "Block finalized on Solana", correct: false },
+          { text: "Supermajority validator tick signing", correct: true },
+          { text: "User confirms in wallet", correct: false },
+          { text: "Trade recorded in feed", correct: false },
+        ],
+      },
+    ];
+
+    const questionElement = document.getElementById("question");
+    const answerButtons = document.getElementById("answer-buttons");
+    const nextButton = document.getElementById("next-btn");
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    function startQuiz() {
+      currentQuestionIndex = 0;
+      score = 0;
+      nextButton.innerHTML = "Next";
+      showQuestion();
+    }
+
+    function showQuestion() {
+      resetState();
+      let currentQuestion = questions[currentQuestionIndex];
+      let questionNo = currentQuestionIndex + 1;
+      questionElement.innerHTML = questionNo + ". " + currentQuestion.question;
+
+      currentQuestion.answers.forEach((answer) => {
+        const button = document.createElement("button");
+        button.innerHTML = answer.text;
+        button.classList.add("btn");
+        answerButtons.appendChild(button);
+        button.addEventListener("click", () => selectAnswer(button, answer));
+      });
+    }
+
+    function resetState() {
+      nextButton.style.display = "none";
+      while (answerButtons.firstChild) {
+        answerButtons.removeChild(answerButtons.firstChild);
+      }
+    }
+
+    function selectAnswer(button, answer) {
+      const isCorrect = answer.correct;
+      if (isCorrect) {
+        button.classList.add("correct");
+        score++;
+      } else {
+        button.classList.add("wrong");
+      }
+      Array.from(answerButtons.children).forEach((btn) => {
+        btn.disabled = true;
+      });
+      nextButton.style.display = "block";
+    }
+
+    function showScore() {
+      resetState();
+      const shareText = encodeURIComponent(
+        `I just scored ${score} out of ${questions.length} on the BulkTrade Quiz! 🚀\nTry it here: [your-site-link]`
+      );
+      const shareURL = `https://twitter.com/intent/tweet?text=${shareText}`;
+      questionElement.innerHTML = `🎯 You scored ${score} out of ${questions.length}!`;
+      const shareBtn = document.createElement("a");
+      shareBtn.href = shareURL;
+      shareBtn.target = "_blank";
+      shareBtn.innerHTML = "Share on X";
+      shareBtn.style.display = "inline-block";
+      shareBtn.style.marginTop = "10px";
+      shareBtn.style.padding = "10px 15px";
+      shareBtn.style.background = "#1DA1F2";
+      shareBtn.style.color = "#fff";
+      shareBtn.style.borderRadius = "8px";
+      shareBtn.style.textDecoration = "none";
+      answerButtons.appendChild(shareBtn);
+      nextButton.innerHTML = "Play Again";
+      nextButton.style.display = "block";
+    }
+
+    function handleNextButton() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < questions.length) {
+        showQuestion();
+      } else {
+        showScore();
+      }
+    }
+
+    nextButton.addEventListener("click", () => {
+      if (currentQuestionIndex < questions.length) {
+        handleNextButton();
+      } else {
+        startQuiz();
+      }
+    });
+
+    startQuiz();
+  </script>
+</body>
+</html>
